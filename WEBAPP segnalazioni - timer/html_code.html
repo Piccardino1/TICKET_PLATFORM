@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segnalazione Ticket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        .border-red-500 {
+            border-color: red !important; /* Imposta il colore del bordo a rosso */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen">
+    <div class="bg-white border border-gray-300 rounded-lg shadow-lg p-8 w-full max-w-md">
+        <h2 class="text-3xl font-bold mb-6 text-center text-blue-600">Segnala un Ticket</h2>
+        
+        <!-- Modulo per la segnalazione -->
+        <form id="ticketForm" class="space-y-6" method="POST" enctype="multipart/form-data">
+            <!-- ID_SEG -->
+            <div>
+                <label for="idSeg" class="block font-semibold text-gray-700">ID Segnalazione</label>
+                <span id="idSeg" class="block p-3 mt-1 border border-gray-300 rounded-lg bg-gray-100 text-gray-700">
+                    {{ ticket_id }}
+                </span>
+            </div>
+
+            <!-- OGGETTO -->
+            <div>
+                <label for="oggetto" class="block font-semibold text-gray-700">Oggetto</label>
+                <input type="text" id="oggetto" name="oggetto" required 
+                    class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Inserisci l'oggetto del ticket">
+            </div>
+
+            <!-- DETTAGLIO -->
+            <div>
+                <label for="dettaglio" class="block font-semibold text-gray-700">Dettaglio</label>
+                <textarea id="dettaglio" name="dettaglio" required rows="4" 
+                    class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Descrivi il problema..."></textarea>
+            </div>
+
+            <!-- Selezione modulo -->
+            <div>
+                <label for="modulo" class="block font-semibold text-gray-700">Modulo</label>
+                <select id="modulo" name="modulo" required 
+                    class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>Scegli un modulo</option>
+                    <option value="ADT">ADT</option>
+                    <option value="WL">WL</option>
+                    <option value="OPM">OPM</option>
+                    <option value="OP">OP</option>
+                </select>
+            </div>
+
+            <!-- Nome Operatore -->
+            <div>
+                <label for="nomeOperatore" class="block font-semibold text-gray-700">Nome Operatore</label>
+                <input type="text" id="nomeOperatore" name="nomeOperatore" required 
+                    class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Inserisci il nome dell'operatore">
+            </div>
+
+            <!-- Recapito Telefonico Operatore -->
+            <div>
+                <label for="recapitoTelefonico" class="block font-semibold text-gray-700">Recapito Telefonico Operatore</label>
+                <input type="tel" id="recapitoTelefonico" name="recapitoTelefonico" required 
+                    class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus :outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Inserisci il recapito telefonico dell'operatore">
+            </div>
+
+            <!-- Recapito Email Operatore -->
+            <div>
+                <label for="recapitoEmail" class="block font-semibold text-gray-700">Recapito Email Operatore</label>
+                <input type="email" id="recapitoEmail" name="recapitoEmail" required 
+                    class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Inserisci il recapito email dell'operatore">
+            </div>
+
+            <!-- Allegare Immagini -->
+            <div>
+                <label for="allegato" class="block font-semibold text-gray-700">Allega Immagine</label>
+                <input type="file" id="allegato" name="allegato" accept="image/*" required 
+                    class="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Messaggio di avviso -->
+            <div id="warningMessage" class="text-red-500 text-center mt-4 hidden">
+                Per favore, compila tutti i campi obbligatori!
+            </div>
+
+            <!-- Pulsante di Invio -->
+            <div class="text-center">
+                <button type="button" onclick="submitTicket()" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200">
+                    Invia Segnalazione
+                </button>
+            </div>
+        </form>
+
+        <!-- Messaggio di conferma -->
+        <div id="confirmationMessage" class="text-green-500 text-center mt-4 hidden">
+            Segnalazione inviata con successo!
+        </div>
+    </div>
+
+    <script>
+        function submitTicket() {
+            const form = document.getElementById('ticketForm');
+            const oggetto = document.getElementById('oggetto');
+            const dettaglio = document.getElementById('dettaglio');
+            const modulo = document.getElementById('modulo');
+            const nomeOperatore = document.getElementById('nomeOperatore');
+            const recapitoTelefonico = document.getElementById('recapitoTelefonico');
+            const recapitoEmail = document.getElementById('recapitoEmail');
+            const allegato = document.getElementById('allegato');
+
+            if (!oggetto.value) {
+                oggetto.classList.add('border-red-500');
+            } else {
+                oggetto.classList.remove('border-red-500');
+            }
+
+            if (!dettaglio.value) {
+                dettaglio.classList.add('border-red-500');
+            } else {
+                dettaglio.classList.remove('border-red-500');
+            }
+
+            if (!modulo.value) {
+                modulo.classList.add('border-red-500');
+            } else {
+                modulo.classList.remove('border-red-500');
+            }
+
+            if (!nomeOperatore.value) {
+                nomeOperatore.classList.add('border-red-500');
+            } else {
+                nomeOperatore.classList.remove('border-red-500');
+            }
+
+            if (!recapitoTelefonico.value) {
+                recapitoTelefonico.classList.add('border-red-500');
+            } else {
+                recapitoTelefonico.classList.remove('border-red-500');
+            }
+
+            if (!recapitoEmail.value) {
+                recapitoEmail.classList.add('border-red-500');
+            } else {
+                recapitoEmail.classList.remove('border-red-500');
+            }
+
+            if (!allegato.files[0]) {
+                allegato.classList.add('border-red-500');
+            } else {
+                allegato.classList.remove('border-red-500');
+            }
+
+            if (!oggetto.value || !dettaglio.value || !modulo.value || !nomeOperatore.value || !recapitoTelefonico.value || !recapitoEmail.value || !allegato.files[0]) {
+                document.getElementById('warningMessage').classList.remove('hidden');
+                return;
+            }
+
+            const formData = new FormData(form);
+
+            fetch('/segnalazioni', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('confirmationMessage').classList.remove('hidden');
+                    form.reset();
+                    window.location.reload(); // Aggiorna la pagina
+                } else {
+                    console.error('Errore durante l\'invio della segnalazione');
+                }
+            })
+            .catch(error => console.error('Errore di rete:', error));
+        }
+        const idleTimeLimit = 300000; // 5 minuti
+        let idleTime = 0;
+        let currentInterval;
+
+        function checkIdleTime() {
+            if (idleTime > idleTimeLimit) {
+                // Redirect to login
+                window.location.href = "/login";
+            }
+        }
+
+        function resetIdleTime() {
+            idleTime = 0;
+        }
+
+        function startIdleTime() {
+            resetIdleTime();
+            currentInterval = setInterval(() => {
+                idleTime += 1000;
+                checkIdleTime();
+            }, 1000);
+        }
+
+        function stopIdleTime() {
+            clearInterval(currentInterval);
+            resetIdleTime();
+        }
+
+        document.addEventListener("mousemove", resetIdleTime);
+        document.addEventListener("keydown", resetIdleTime);
+        document.addEventListener("touchstart", resetIdleTime);
+
+        window.onload = startIdleTime;
+    </script>
+</body>
+</html>

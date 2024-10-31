@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizzazione Segnalazioni</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 flex flex-col items-center min-h-screen p-4">
+    <!-- Titolo fisso -->
+    <h2 class="text-4xl font-bold text-gray-800 mb-8 text-center bg-blue-100 border-l-4 border-blue-500 p-4 rounded-lg shadow-md">
+        Visualizzazione Segnalazioni
+    </h2>
+
+    <!-- Container per i ticket -->
+    <div id="ticketsContainer" class="w-full max-w-3xl space-y-6">
+        {% for ticket in tickets %}
+        <div class="bg-white p-6 border border-gray-300 rounded-lg shadow-lg flex flex-col md:flex-row justify-between items-start fade-enter fade-enter-active transition-all duration-300 hover:shadow-xl">
+            <div class="flex-1 mb-4 md:mb-0">
+                <p class="text-gray-800 text-lg font-semibold"><strong>ID Segnalazione:</strong> {{ ticket.id_seg }}</p>
+                <p class="text-gray-700"><strong>Oggetto:</strong> {{ ticket.oggetto }}</p>
+                <p class="text-gray-700"><strong>Dettaglio:</strong> {{ ticket.dettaglio }}</p>
+                <p class="text-gray-700"><strong>Nome Operatore:</strong> {{ ticket.nome_operatore }}</p>
+                <p class="text-gray-700"><strong>Modulo:</strong> {{ ticket.modulo }}</p>
+                <p class="text-gray-700"><strong>recapito telefonico operatore:</strong> {{ ticket.recapito_telefonico }}</p>
+                <p class="text-gray-700"><strong>recapito email operatore:</strong> {{ ticket.recapito_email }}</p>
+                {% if ticket.allegato %}
+                    <p class="text-gray-700"><strong>Allegato:</strong> <a href="{{ ticket.allegato }}" target="_blank" class="text-blue-600 underline hover:text-blue-800">Visualizza Immagine</a></p>
+                {% else %}
+                    <p class="text-gray-700"><strong>Allegato:</strong> Nessuno</p>
+                {% endif %}
+                
+                <label for="stato-{{ ticket.id_seg }}" class="block font-semibold text-gray-700 mt-4">Stato</label>
+                <select id="stato-{{ ticket.id_seg }}" name="stato" required 
+                    onchange="updateTicketState(this)"
+                    class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled>Scegli uno stato</option>
+                    <option value="Inserito" {% if ticket.stato == 'Inserito' %}selected{% endif %}>Inserito</option>
+                    <option value="In lavorazione" {% if ticket.stato == 'In lavorazione' %}selected{% endif %}>In lavorazione</option>
+                    <option value="Sospeso" {% if ticket.stato == 'Sospeso' %}selected{% endif %}>Sospeso</option>
+                    <option value="Chiuso" {% if ticket.stato == 'Chiuso' %}selected{% endif %}>Chiuso</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="ticket-{{ loop.index }}" class="form-checkbox h-5 w-5 text-blue-600" 
+                           onchange="markAsSeen('{{ ticket.id_seg }}', this.checked)" 
+                           {% if ticket.seen %}checked{% endif %}>
+                    <label for="ticket-{{ loop.index }}" class="ml-2 text-gray-700">Visualizzato</label>
+                </div>
+                <button onclick="confirmDelete('{{ ticket.id_seg }}', this.closest('.bg-white'))" 
+                        class="bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600 transition duration-200">
+                    Elimina
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function markAsSeen(idSeg, seen) {
+            fetch('/update_ticket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `idSeg=${encodeURIComponent(idSeg)}&seen=${seen}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log(`Segnalazione ${idSeg} marcata come ${seen ? 'visualizzata' : 'non visualizzata'}`);
+                } else {
+                    console.error(`Errore durante l'aggiornamento della segnalazione ${idSeg}`);
+                }
+            })
+            .catch(error => {
+                console.error(`Errore durante l'aggiornamento della segnalazione ${idSeg}: ${error}`);
+            });
+        }
+
+        function confirmDelete(idSeg, ticketElement) {
+            if (confirm(`Sei sicuro di voler eliminare la segnalazione ID: ${idSeg}?`)) {
+                fetch('/delete_ticket', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `idSeg=${encodeURIComponent(idSeg)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        ticketElement.remove();
+                        console.log(data.message);
+                    } else {
+                        console.error(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Errore durante l'eliminazione della segnalazione ${idSeg}: ${error}`);
+                });
+            }
+        }
+
+        function updateTicketState(select) {
+            const ticketId = select.id.split('-')[1];
+            const newState = select.value;
+            
+            fetch('/update_ticket_state', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    idSeg: ticketId, 
+                    stato: newState 
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore nell\'aggiornamento dello stato del ticket');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Stato aggiornato con successo:', data);
+            })
+            .catch(error => console.error('Errore:', error));
+        }
+
+        function fetchTickets() {
+            const selectedStates = {};
+            
+            document.querySelectorAll('select[name="stato"]').forEach(select => {
+                const ticketId = select.id.split('-')[1];
+                selectedStates[ticketId] = select.value;
+            });
+
+            fetch('/tickets')
+                .then(response => response.text())
+                .then(html => {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    
+                    const ticketsContainer = document.getElementById('ticketsContainer');
+                    const newTickets = tempDiv.querySelector('#ticketsContainer').innerHTML;
+                    
+                    ticketsContainer.innerHTML = newTickets;
+
+                    Object.entries(selectedStates).forEach(([ticketId, state]) => {
+                        const select = document.querySelector(`#stato-${ticketId}`);
+                        if (select) {
+                            select.value = state;
+                        }
+                    });
+                })
+                .catch(error => console.error('Errore:', error));
+        }
+
+        // Aggiorna i ticket ogni 5 secondi
+        setInterval(fetchTickets, 5000);
+    </script>
+</body>
+</html>

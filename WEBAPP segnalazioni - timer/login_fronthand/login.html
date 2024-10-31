@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            overflow: hidden; /* Prevenire lo scrolling della pagina */
+            height: 100vh; /* Impostare l'altezza del body */
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: top 0.2s; /* Transizione per il movimento */
+            position: absolute; /* Cambiato da static a absolute */
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%); /* Centrare il contenitore */
+        }
+        .login-container h2 {
+            color: #fff;
+            margin-bottom: 1.5rem;
+        }
+        .login-container input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #fff;
+            color: #fff;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            width: 100%;
+            transition: border-color 0.3s;
+        }
+        .login-container input:focus {
+            outline: none;
+            border-color: #ff007f;
+        }
+        .login-container input::placeholder {
+            color: #fff;
+            opacity: 0.7;
+        }
+        .login-btn {
+            background: #ff007f;
+            border: none;
+            color: #fff;
+            padding: 0.75rem;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+        }
+        .login-btn:hover {
+            background: #e60073;
+            transform: translateY(-2px);
+        }
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        .icon {
+            font-size: 4rem;
+            color: #ff007f;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="login-container">
+        <i class="fas fa-user-circle icon"></i>
+        <div class="mb-4">
+            <input type="text" placeholder="USERNAME" id="username" autocomplete="off">
+        </div>
+        <div class="mb-4">
+            <input type="password" placeholder="PASSWORD" id="password" autocomplete="off">
+        </div>
+        <button class="login-btn">LOGIN</button>
+    </div>
+
+    <script>
+        const loginContainer = document.getElementById('login-container');
+        const loginBtn = document.querySelector('.login-btn');
+    
+        // Gestione del login
+        loginBtn.addEventListener('click', async () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+    
+            try {
+                const response = await fetch('/verify_credentials', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+    
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // Reindirizza alla pagina delle segnalazioni
+                        window.location.href = 'https://192.168.160.180:5001/segnalazioni';
+                    } else {
+                        alert('Credenziali non valide!');
+                    }
+                } else {
+                    alert('Errore durante il login. Riprova più tardi.');
+                }
+            } catch (error) {
+                console.error('Errore durante il login:', error);
+                alert('Errore durante il login. Riprova più tardi.');
+            }
+        });
+    
+        // Codice esistente per l'aggiustamento del container
+        function adjustLoginContainer() {
+            const viewportHeight = window.innerHeight;
+            const inputOffset = 250;
+    
+            if (viewportHeight < 600) {
+                loginContainer.style.top = `${viewportHeight - inputOffset}px`;
+            } else {
+                loginContainer.style.top = '50%';
+            }
+        }
+    
+        window.addEventListener('resize', adjustLoginContainer);
+        document.getElementById('username').addEventListener('focus', adjustLoginContainer);
+        document.getElementById('password').addEventListener('focus', adjustLoginContainer);
+        adjustLoginContainer();
+    </script>
+</body>
+</html>
